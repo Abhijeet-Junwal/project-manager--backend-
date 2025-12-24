@@ -1,0 +1,23 @@
+{
+  "name": "projectmanagerbackend",
+  "version": "1.0.0",
+  "description": "Project management application for beginners BACKEND",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node index.js"
+  },
+  "keywords": [
+    "Hitesh",
+    "Choudhary",
+    "udemy",
+    "Backend",
+    "API",
+    "creation"
+  ],
+  "author": "Abhijeet Junwal",
+  "license": "ISC",
+  "devDependencies": {
+    "prettier": "3.7.4"
+  }
+}
