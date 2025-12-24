@@ -5,7 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "node index.js"
+    "dev": "nodemon index.js",
+    "start": "node index.js"
   },
   "keywords": [
     "Hitesh",
@@ -18,6 +19,10 @@
   "author": "Abhijeet Junwal",
   "license": "ISC",
   "devDependencies": {
+    "nodemon": "^3.1.11",
     "prettier": "3.7.4"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3"
   }
 }
