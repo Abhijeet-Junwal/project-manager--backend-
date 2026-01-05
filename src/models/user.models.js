@@ -1,9 +1,9 @@
 import bcrypt from "bcrypt";
-import mongoose, {Sch, Schema, Types} from "mongoose";
+import mongoose, {Schema, Types} from "mongoose";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
-const userSchema = new Schema(
+const userSchema =  new Schema(
     {
         avatar: {
             type: {
@@ -63,12 +63,12 @@ const userSchema = new Schema(
 );
 
 // Hooks
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function () {
 
-    if(!this.isModified("password")) return next();   //if the password is not entered first time or changed no need to do hashing(encrypting)
+    if(!this.isModified("password")) return;   //if the password is not entered first time or changed no need to do hashing(encrypting)
 
     this.password = await bcrypt.hash(this.password, 10);
-    next();
+
 })
 
 // Methods
@@ -112,4 +112,4 @@ userSchema.methods.generateTemporaryToken = function(){
     return {unHashedToken, hashedToken, tokenExpiry};
 }
 
-export default User = mongoose.model("User", userSchema);
+export const User = mongoose.model("User", userSchema);
