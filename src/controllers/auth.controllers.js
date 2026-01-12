@@ -2,9 +2,10 @@ import { User } from "../models/user.models.js"
 import { ApiResponse } from "../utils/api-response.js"
 import { ApiError } from "../utils/api-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
-import { emailVerificationMailgenContent, sendEmail } from "../utils/mail.js";
-import crypto from "crypto";
+import { emailVerificationMailgenContent, sendEmail, ForgotPasswordMailgenContent } from "../utils/mail.js";
+import crypto, { createHash } from "crypto";
 import jwt from "jsonwebtoken";  
+import { send } from "process";
 
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -277,7 +278,74 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         console.log(error);
         throw new ApiError(401, "refresh token is expired");
     }
+
+});
+
+const forgotPasswordRequest = asyncHandler(async (req, res) => {
+    const {email} = req.body;
+
+    const user = await User.findOne({email});
+
+    if(!user){
+        throw new ApiError(400, "User with this Email does not Exist", []);
+    }
+
+    const {unHashedToken, hashedToken, tokenExpiry} = user.generateTemporaryToken();
+    user.forgotPasswordToken = hashedToken;
+    user.forgotPasswordExpiry = Date.now() + 10 * 60 * 1000;    // 10 mins
+
+    await user.save({validateBeforeSave: false});
+
+    await sendEmail({
+        email: user.email,
+        subject: "Request to change password",
+        mailgenContent: ForgotPasswordMailgenContent(
+            user.username,
+            `${process.env.FORGOT_PASSWORD_REDIRECT_URL}/reset-password/${unHashedToken}`,
+        ),
+    });
+
+    return res
+        .status(200)
+        .json(
+            200,
+            {},
+            "Password Reset mail has been sent to your mail id",
+        )
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+    const {resetToken} = req.params;
+    const {newPassword} = req.body;
+
+    let hashedToken = crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
+
+    const user = await User.findOne({
+        forgotPasswordToken: hashedToken,
+        forgotPasswordExpiry: {$gt: Date.now()},
+    });
+
+    if(!user){
+        throw new ApiError(480, "Token is invalid or expired");
+    }
     
+    user.forgotPasswordToken = undefined;
+    user.forgotPasswordExpiry = undefined;
+
+    user.password = newPassword;
+    user.save();    
+
+    return res  
+        .status(200)
+        .json(
+            200,
+            {},
+            ""
+        );
+
 });
 
 export {
@@ -288,4 +356,6 @@ export {
     verifyEmail, 
     resendEmailVerification,
     refreshAccessToken,
+    forgotPasswordRequest,
+    resetPassword,
 };
