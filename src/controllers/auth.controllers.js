@@ -308,10 +308,12 @@ const forgotPasswordRequest = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .json(
-            200,
-            {},
-            "Password Reset mail has been sent to your mail id",
-        )
+            new ApiResponse(
+                200,
+                {},
+                "Password Reset mail has been sent to your mail id"
+            )
+        );
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
@@ -341,12 +343,34 @@ const resetPassword = asyncHandler(async (req, res) => {
     return res  
         .status(200)
         .json(
-            200,
-            {},
-            ""
+            new ApiResponse(
+                200,
+                {},
+                `The Password for your email ${user.email} is changed successfully`
+            )
         );
 
 });
+
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+    const { oldPassword, newPassword } = req.body;
+
+    const user = await User.findById(req.user._id).select("+password");
+
+    const isPasswordValid = await user.isPasswordCorrect(oldPassword);
+
+    if (!isPasswordValid) {
+        throw new ApiError(402, "Enter Correct Current Password");
+    }
+
+    user.password = newPassword;
+    await user.save(); // password hashing middleware will run
+
+    return res.status(200).json(
+        new ApiResponse(200, {}, "The Password has been Changed")
+    );
+});
+
 
 export {
     registerUser, 
@@ -358,4 +382,5 @@ export {
     refreshAccessToken,
     forgotPasswordRequest,
     resetPassword,
+    changeCurrentPassword,
 };

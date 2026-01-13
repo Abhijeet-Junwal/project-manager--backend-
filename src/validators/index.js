@@ -58,11 +58,25 @@ const resetForgotPasswordValidator = () => {
             .withMessage("New Changed Password is required")
             
     ]
-}
+};
+
+const changeCurrentPasswordValidator = () => {
+    return [
+        body("oldPassword")
+            .trim()
+            .notEmpty()
+            .withMessage("Old Password is required"),
+        body("newPassword")
+            .trim()
+            .notEmpty()
+            .withMessage("New Password is required"),
+    ]
+};
 
 export {
     userRegistorValidator,
     userLoginValidator,
     forgotPasswordValidator,
-    resetForgotPasswordValidator
+    resetForgotPasswordValidator,
+    changeCurrentPasswordValidator,
 }
