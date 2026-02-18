@@ -5,7 +5,7 @@ import { ApiResponse } from "../utils/api-response.js"
 import { ApiError } from "../utils/api-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
 import mongoose from "mongoose";
-import { UserRoleEum } from "../utils/constants.js";
+import { AvalaibleUserRoles, UserRoleEum } from "../utils/constants.js";
 
 
 const getProjects = asyncHandler(async (req, res) => {
@@ -229,6 +229,54 @@ const getProjectMembers = asyncHandler(async (req, res) => {
         .json(new ApiResponse(201, projectMembers, "Project members fetched successfully"));
 });
 
+const updateMemberRole = asyncHandler(async (req, res) => {
+    const {projectId, userId} = req.params;
+    const {newRole} = req.body;
+    
+    if(!AvalaibleUserRoles.includes(newRole)){
+        throw new ApiError(400, "Invalid role")
+    }
+
+    let projectMember = await ProjectMember.findOne({
+        project: new mongoose.Types.ObjectId(projectId),
+        user: new mongoose.Types.ObjectId(userId),
+    })
+
+    if(!projectMember){
+        throw new ApiError(404, "Project member not found")
+    }
+
+    projectMember = await ProjectMember.findByIdAndUpdate(
+        projectMember._id,
+        {
+            role: newRole
+        },
+        {new: true}
+    );
+
+    return res 
+        .status(201)
+        .json(new ApiResponse(201, projectMember, "Project member role updated successfully"));
+});
+
+const deleteMember = asyncHandler(async (req, res) => {
+    const {projectId, userId} = req.params;
+
+    let projectMember = await ProjectMember.findOne({
+        project: new mongoose.Types.ObjectId(projectId),
+        user: new mongoose.Types.ObjectId(userId),
+    })
+
+    if(!projectMember){
+        throw new ApiError(404, "Project member not found")
+    }
+
+    projectMember = await ProjectMember.findByIdAndDelete(projectMember._id);
+
+    return res 
+        .status(201)
+        .json(new ApiResponse(201, projectMember, "Project member deleted successfully"));
+});
 
 export {
     getProjects,
@@ -238,4 +286,6 @@ export {
     deleteProject,
     addMembersToProject,
     getProjectMembers,
+    updateMemberRole,
+    deleteMember,
 };
